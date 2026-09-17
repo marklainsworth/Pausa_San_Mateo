@@ -86,6 +86,13 @@
   @media (min-width:768px){ .to-top{left:calc(15% + 16px);} }
   @media (min-width:1429px){ .to-top{left:calc(50% - 500px + 16px);} }
   body.page-cover .to-top{display:none !important;}
+  /* Contents page: the Cover button sits top-left of the header, in the same column and inset as the
+     one beside the search box on the menu pages. Hidden elsewhere (the menu has its own in the bar). */
+  .app-header{position:relative;}
+  .header-cover-row{display:none;}
+  body.page-contents .header-cover-row{display:block;position:absolute;top:10px;left:0;right:0;
+    max-width:600px;margin:0 auto;padding:0 var(--spacing-md);pointer-events:none;}
+  body.page-contents .header-cover-row .close-book{pointer-events:auto;}
 
   /* Portrait only on phones and tablets. A web page cannot lock the screen, so a touch device held
      sideways gets this full-screen notice until it is turned upright. Desktops are never affected. */
@@ -142,15 +149,16 @@
 
   /* Phone cover type sizes (desktop keeps the base sizes). */
   @media (max-width:767px){
-    body .cover{padding-left:6px;padding-right:6px;}
-    body .cover-panel{max-width:420px;padding-left:12px;padding-right:12px;}
-    /* Columns sized to their longest title, so each tip title stays on one line on a 375px phone. */
-    body .cover-howto{grid-template-columns:auto auto;justify-content:space-between;column-gap:8px;}
-    body .cover-howto li{gap:7px;}
+    /* Narrower panel so more photo shows at the sides: 30px each side on a 390px iPhone, never wider
+       than 330px. The two tip columns hug their titles and sit close together in the middle. */
+    body .cover{padding-left:max(20px, calc((100% - 330px) / 2));padding-right:max(20px, calc((100% - 330px) / 2));}
+    body .cover-panel{max-width:330px;padding-left:10px;padding-right:10px;}
+    body .cover-howto{grid-template-columns:auto auto;justify-content:center;column-gap:6px;}
+    body .cover-howto li{gap:6px;}
     body .howto-title{white-space:nowrap;}
     body .cover-sub{font-size:12px;}
     body .cover-lede{font-size:15px;}
-    body .howto-title{font-size:13.5px;}
+    body .howto-title{font-size:12.5px;}
     body .cover .btn-primary{font-size:13px;max-width:270px;min-height:40px;}
     body .cover-address{font-size:13px;}
   }
@@ -520,7 +528,15 @@
     </div>
   </div>
   <section id="coverView" aria-label="Cover"><!-- CONFIG.cover --></section>
-  <header class="app-header"><div class="masthead" id="masthead"><!-- CONFIG --></div></header>
+  <header class="app-header">
+    <div class="header-cover-row">
+      <button type="button" class="close-book" id="closeBookContents" aria-label="Close the list and return to the cover" title="Close the list">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H18a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M8 4v16"/></svg>
+        <span>Cover</span>
+      </button>
+    </div>
+    <div class="masthead" id="masthead"><!-- CONFIG --></div>
+  </header>
 
   <div class="sticky-bar">
     <div class="search-wrapper">
@@ -1308,7 +1324,6 @@
       (t.intro ? '<p class="toc-intro">'+fillTokens(t.intro)+'</p>' : '') +
       groupsHtml +
       '<div class="toc-actions"><button class="btn-primary" data-go="menu" data-cat="all">See the full list</button>' +
-      (hasCover() ? '<button class="btn-link" data-go="cover" data-reset="1">Back to the cover</button>' : '') +
       '<button class="btn-link" data-go="menu" data-cat="all" data-focus-search="1">Ask the virtual somm</button></div></div>';
   }
   /* CONFIG.contents.split lets one menu section show as several contents lines, divided by
@@ -1522,6 +1537,7 @@
     if(hasContents()){ mast.classList.add('to-contents'); mast.addEventListener('click', function(){ go('contents'); }); }
     window.addEventListener('popstate', route);
     document.getElementById('closeBook').addEventListener('click', closeBook);
+    document.getElementById('closeBookContents').addEventListener('click', closeBook);
     var toTop = document.getElementById('toTop'), tick = false;
     function syncToTop(){ tick = false; toTop.hidden = window.scrollY < window.innerHeight * 1.2; }
     window.addEventListener('scroll', function(){ if(!tick){ tick = true; requestAnimationFrame(syncToTop); } }, {passive:true});
