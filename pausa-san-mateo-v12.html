@@ -101,7 +101,7 @@
   /* Tablet cover: larger panel and type, lifted 10% of the screen height off the bottom.
      Tablet = 768-1024px wide, plus touch tablets in landscape up to 1366px (iPad Pro), so desktops
      with a mouse keep the desktop layout. */
-  @media (min-width:768px) and (max-width:1024px), (min-width:768px) and (max-width:1366px) and (hover:none) and (pointer:coarse){
+  @media (min-width:700px) and (max-width:1199px) and (orientation:portrait){
     body .cover{padding-bottom:calc(48px + 10vh);padding-bottom:calc(48px + 10svh);}
     /* Explicit sizes rather than zoom, so the type lands on the exact point sizes chosen.
        Panel, logo, title, icons and spacing are the desktop values x1.38 (the old 1.2 zoom, +15%). */
@@ -120,7 +120,26 @@
     body .cover-actions{margin-top:19px;gap:6px;}
     body .cover .btn-primary{min-height:47px;max-width:304px;font-size:15px;}
     body .cover-address{font-size:15px;margin-top:11px;}
-  }
+  }  /* Same tablet sizing, applied by device rather than by window width: real iPads come in widths the
+     media query can miss (iPad mini 744px, 13" iPads 1032px) and report a mouse when a keyboard or
+     trackpad is attached. .is-tablet is set in JS for any touch device whose short side is 600px+. */
+  html.is-tablet body .cover{padding-bottom:calc(48px + 10vh);padding-bottom:calc(48px + 10svh);}
+  html.is-tablet body .cover-panel{max-width:607px;padding:30px 33px 22px;}
+  html.is-tablet body .cover-head{margin-bottom:15px;}
+  html.is-tablet body .cover-mark{width:75px;min-width:75px;margin-bottom:11px;}
+  html.is-tablet body .cover-title{font-size:58px;}
+  html.is-tablet body .cover-sub{font-size:14px;margin-top:8px;}
+  html.is-tablet body .cover-lede{font-size:17px;margin-bottom:17px;}
+  html.is-tablet body .cover-howto{column-gap:19px;}
+  html.is-tablet body .cover-howto li{gap:12px;padding:11px 0;}
+  html.is-tablet body .howto-icon{width:30px;height:30px;}
+  html.is-tablet body .howto-icon svg{width:15px;height:15px;}
+  html.is-tablet body .howto-title{font-size:16px;}
+  html.is-tablet body .howto-text{font-size:15px;}
+  html.is-tablet body .cover-actions{margin-top:19px;gap:6px;}
+  html.is-tablet body .cover .btn-primary{min-height:47px;max-width:304px;font-size:15px;}
+  html.is-tablet body .cover-address{font-size:15px;margin-top:11px;}
+
   /* Phone cover type sizes (desktop keeps the base sizes). */
   @media (max-width:767px){
     body .cover{padding-left:6px;padding-right:6px;}
@@ -137,12 +156,8 @@
   }
   /* Narrowest phones (under 370px) cannot fit the titles on one line, so they may wrap there. */
   @media (max-width:369px){ body .howto-title{white-space:normal;} }
-  /* Short tablet screens (iPad in landscape): the enlarged, lifted panel would run off the screen,
-     so the tips keep their titles and drop the one-line descriptions. */
-  @media (min-width:768px) and (max-width:1024px) and (max-height:840px), (min-width:768px) and (max-width:1366px) and (max-height:840px) and (hover:none) and (pointer:coarse){
-    .cover .howto-text{display:none;}
-    .cover-howto li{padding:6px 0;align-items:center;}
-  }
+  /* Tip descriptions always show on tablets and wider screens; only phones drop them. */
+  html.is-tablet body .cover .howto-text{display:block;}
   .search-input{width:100%;background:var(--color-surface);border:1px solid var(--color-divider);padding:10px 18px;
     border-radius:30px;color:var(--color-text-main);font-size:16px;outline:none;transition:all .3s ease;
     box-shadow:inset 0 2px 4px rgba(0,0,0,0.03);}
@@ -382,7 +397,7 @@
   @media (min-width:768px){ .cover-panel{max-width:440px;padding:22px 24px 16px;} }
   .cover-head{text-align:center;margin-bottom:11px;}
   .cover-mark{width:clamp(44px,11vw,54px);min-width:44px;height:auto;flex-shrink:0;display:block;margin:0 auto 8px;}
-  @media (max-height:720px){ .cover .howto-text{display:none;} .cover-howto li{padding:5px 0;align-items:center;} }
+  @media (max-width:767px) and (max-height:720px){ .cover .howto-text{display:none;} .cover-howto li{padding:5px 0;align-items:center;} }
   @media (max-height:540px){ .cover .cover-address{display:none;} .cover{padding-top:12px;padding-bottom:12px;} }
   .cover-mark.invert{filter:brightness(0) invert(1);}
   .cover-title{font-family:var(--font-display);font-weight:var(--wt-display,300);color:var(--color-primary);
@@ -1417,10 +1432,18 @@
     return !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches) ||
       (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)); // iPadOS reports as a Mac
   }
+  // Landscape only when the device says so AND the visible window is wider than tall. The second
+  // check stops a false alarm where the orientation API and the real window disagree.
   function screenIsLandscape(){
-    if(screen.orientation && screen.orientation.type) return screen.orientation.type.indexOf('landscape') === 0;
-    if(typeof window.orientation === 'number') return Math.abs(window.orientation) === 90;
-    return screen.width > screen.height;
+    var wide = window.innerWidth > window.innerHeight, dev;
+    if(screen.orientation && screen.orientation.type) dev = screen.orientation.type.indexOf('landscape') === 0;
+    else if(typeof window.orientation === 'number') dev = Math.abs(window.orientation) === 90;
+    else dev = wide;
+    return dev && wide;
+  }
+  function markTablet(){
+    var shortSide = Math.min(screen.width || 0, screen.height || 0);
+    document.documentElement.classList.toggle('is-tablet', isTouchDevice() && shortSide >= 600);
   }
   function checkOrientation(){
     var n = document.getElementById('rotateNotice'); if(!n) return;
@@ -1435,6 +1458,7 @@
     if(screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener('change', checkOrientation);
     window.addEventListener('orientationchange', function(){ setTimeout(checkOrientation, 50); });
     window.addEventListener('resize', checkOrientation);
+    markTablet();
     checkOrientation();
   }
 
